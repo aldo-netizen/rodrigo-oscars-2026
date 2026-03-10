@@ -409,11 +409,18 @@ select option { background:#111; color:var(--ink); }
 .counter-pop { animation:counter-pop 0.35s ease forwards; }
 
 /* ── PICKS DRAWER ── */
-.picks-drawer {
+/* Zero-height sticky anchor — sticks below topbar, takes no layout space */
+#picks-drawer-anchor {
   position:sticky;
   top:var(--topbar-h, 49px);
-  left:0; width:100%;
+  height:0;
   z-index:48;
+  overflow:visible;
+}
+.picks-drawer {
+  position:absolute;
+  top:0;
+  left:-48px; right:-48px;
   background:#000;
   border-bottom:1px solid var(--rule);
   max-height:0;
@@ -425,13 +432,14 @@ select option { background:#111; color:var(--ink); }
   overflow-y:auto;
 }
 .picks-drawer-inner {
-  padding:24px 0 32px;
+  padding:24px 48px 32px;
   max-width:1100px;
   margin:0 auto;
   box-sizing:border-box;
 }
 @media(max-width:560px){
-  .picks-drawer-inner { padding:20px 0 24px; }
+  .picks-drawer { left:-20px; right:-20px; }
+  .picks-drawer-inner { padding:20px 20px 24px; }
 }
 .lb-view-link { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.1em; color:rgba(249,195,0,0.7); text-decoration:none; }
 .lb-view-link:hover { color:var(--ink); }
@@ -513,7 +521,7 @@ select option { background:#111; color:var(--ink); }
   white-space:nowrap;
 }
 .picks-toggle-icon {
-  font-size:9px;
+  font-size:12px;
   transition:transform 0.3s ease;
   color:inherit;
 }
@@ -650,9 +658,11 @@ select option { background:#111; color:var(--ink); }
       </button>
     </div>
   </div>
-  <!-- Picks drawer — slides down from topbar -->
-  <div class="picks-drawer" id="picks-drawer">
-    <div class="picks-drawer-inner" id="picks-drawer-inner"></div>
+  <!-- Picks drawer — zero-height sticky anchor keeps it below topbar without pushing content -->
+  <div id="picks-drawer-anchor">
+    <div class="picks-drawer" id="picks-drawer">
+      <div class="picks-drawer-inner" id="picks-drawer-inner"></div>
+    </div>
   </div>
   <div class="ballot-scroll-body">
 
