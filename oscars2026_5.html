@@ -305,9 +305,10 @@ select option { background:#111; color:var(--ink); }
 
 /* ── CONFIRMATION ── */
 .confirm-wrap { max-width:520px; margin:0 auto; text-align:center; }
-.confirm-icon  { font-size:32px; margin-bottom:24px; opacity:.45; }
-.confirm-title { font-family:'Cormorant SC',serif; font-size:28px; font-weight:300; letter-spacing:0.05em; margin-bottom:16px; }
-.confirm-body  { font-style:italic; font-size:15px; color:var(--ink-mid); line-height:1.85; margin-bottom:32px; }
+.confirm-svg  { width:180px; margin:0 auto 40px; }
+.confirm-svg svg { width:100%; height:auto; opacity:0.65; }
+.confirm-title { font-family:'DM Sans',sans-serif; font-weight:400; font-size:20px; letter-spacing:0; margin-bottom:12px; color:var(--ink); }
+.confirm-body  { font-family:'DM Sans',sans-serif; font-style:italic; font-size:15px; color:var(--ink-mid); line-height:1.85; margin-bottom:32px; }
 .confirm-link-box { border:1px solid var(--rule); padding:16px 20px; display:flex; align-items:center; gap:12px; margin-bottom:28px; text-align:left; }
 .confirm-link-url { flex:1; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.05em; color:var(--ink-mid); word-break:break-all; }
 .confirm-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
@@ -714,7 +715,7 @@ select option { background:#111; color:var(--ink); }
 <div id="page-confirm" class="page">
 <div class="wrap">
   <div class="confirm-wrap fade">
-    <div class="confirm-icon" id="confirm-icon">✦</div>
+    <div class="confirm-svg" id="confirm-svg"></div>
     <div class="confirm-title" id="confirm-title">Ballot saved</div>
     <p class="confirm-body" id="confirm-body"></p>
 
@@ -723,14 +724,13 @@ select option { background:#111; color:var(--ink); }
       <button class="btn sm" onclick="copyLink()">Copy</button>
     </div>
 
-    <p style="font-size:13px;font-style:italic;color:var(--ink-mid);margin-bottom:28px;line-height:1.7">
+    <p style="font-family:'DM Mono',monospace;font-size:11px;font-style:italic;color:var(--ink-mid);margin-bottom:28px;line-height:1.9">
       Bookmark this link — it's your personal ballot page. Use it to edit your picks, check your score on the night, and see how you compare on the leaderboard.
     </p>
 
     <div class="confirm-actions">
       <button class="btn fill"  onclick="viewMyBallot()">View My Ballot</button>
-      <button class="btn ghost" onclick="goto('page-leaderboard'); loadLeaderboard()">Leaderboard</button>
-      <button class="btn ghost" onclick="goto('page-landing')">Home</button>
+      <button class="btn ghost" style="border:none" onclick="goto('page-leaderboard'); loadLeaderboard()">Leaderboard</button>
     </div>
   </div>
 </div>
@@ -1686,13 +1686,18 @@ async function saveBallot(status) {
     } catch(emailErr) { console.warn('Email failed (ballot still saved):', emailErr); }
 
     // Show confirmation
-    document.getElementById('confirm-icon').textContent  = status === 'submitted' ? '✦' : '◦';
     document.getElementById('confirm-title').textContent = status === 'submitted' ? 'You\'re on the board' : 'Draft saved';
     document.getElementById('confirm-body').innerHTML    = status === 'submitted'
       ? `Your ballot has been submitted and you're now on the leaderboard.<br><span style="color:var(--ink-light)">A confirmation email is on its way to <em>${esc(email)}</em>.</span>`
       : `Your picks are saved as a draft — they won't appear on the leaderboard until you submit.<br><span style="color:var(--ink-light)">A reminder email is on its way to <em>${esc(email)}</em> with a link to return.</span>`;
     document.getElementById('confirm-link-url').textContent = link;
     document.getElementById('confirm-link-url').dataset.url = link;
+    // Inject RODRIGO logo SVG from landing page (clone once)
+    const svgWrap = document.getElementById('confirm-svg');
+    if (svgWrap && !svgWrap.firstChild) {
+      const src = document.querySelector('.landing-title svg');
+      if (src) { const c = src.cloneNode(true); c.removeAttribute('width'); c.removeAttribute('height'); svgWrap.appendChild(c); }
+    }
     goto('page-confirm');
 
   } catch(err) {
