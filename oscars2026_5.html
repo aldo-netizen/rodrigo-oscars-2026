@@ -564,7 +564,7 @@ select option { background:#111; color:var(--ink); }
 .picks-toggle.open .picks-toggle-label { color:var(--ink); }
 
 /* ── SITE FOOTER ── */
-.site-footer { text-align:center; padding:48px 20px 32px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); }
+.site-footer { position:fixed; bottom:0; left:0; right:0; text-align:center; padding:12px 20px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-light); pointer-events:none; z-index:10; }
 </style>
 </head>
 <body>
@@ -1378,6 +1378,8 @@ function goto(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
   window.scrollTo(0, 0);
+  const footer = document.querySelector('.site-footer');
+  if (footer) footer.style.display = pageId === 'page-landing' ? '' : 'none';
 }
 
 function goToBallot() {
