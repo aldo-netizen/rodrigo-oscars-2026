@@ -1,0 +1,3 @@
+{
+  "rewrites": [{ "source": "/", "destination": "/oscars2026_5.html" }]
+}
