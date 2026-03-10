@@ -2075,8 +2075,6 @@ const TRAIL_IMAGES = [
   { src:'https://i0.wp.com/punchdrunkcritics.com/wp-content/uploads/2025/10/pdc_sentimentalvalue1.jpg?w=1392&ssl=1', w:340, h:190 },
   // The Secret Agent / Wagner Moura — landscape
   { src:'https://freepressokc.com/wp-content/uploads/2026/01/the-spy-2025-wagner-moura-2025-wagner-moura-neon-.webp', w:320, h:200 },
-  // The Secret Agent still — landscape
-  { src:'http://thefilmexperience.net/storage/2025/The-Secret-Agent-Tania-Maria-intro-scope.jpg?__SQUARESPACE_CACHEVERSION=1764196613271', w:360, h:180 },
   // Portrait still (encrypted tbn)
   { src:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHlrlbZGIzUcxHGhQi2-PujGzX4QUcfUFI1Q&s', w:200, h:300 },
   // Marty Supreme — Chalamet & Tyler — landscape
@@ -2150,7 +2148,7 @@ function initTrail() {
       setTimeout(() => spawnImage(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist), i * 50);
     }
     clearTimeout(idleTimer);
-    idleTimer = setTimeout(fadeAllImages, 1800);
+    idleTimer = setTimeout(fadeAllImages, 500);
   }, { passive: true });
 }
 
