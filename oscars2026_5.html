@@ -395,6 +395,17 @@ select option { background:#111; color:var(--ink); }
 .btn-danger { background:transparent; border:1px solid #c0392b; color:#c0392b; padding:6px 12px; font-size:12px; cursor:pointer; letter-spacing:0.02em; flex-shrink:0; }
 .btn-danger:hover { background:#c0392b; color:#fff; }
 
+/* ── ADMIN BALLOTS TABLE ── */
+.admin-ballots-table { width:100%; border-collapse:collapse; font-size:13px; }
+.admin-ballots-table th { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-mid); padding:10px 12px 10px 0; text-align:left; border-bottom:1px solid var(--rule); white-space:nowrap; }
+.admin-ballots-table td { font-family:'DM Sans',sans-serif; padding:10px 12px 10px 0; border-bottom:1px solid var(--rule); color:var(--ink-light); vertical-align:middle; }
+.admin-ballots-table td:first-child { color:var(--ink); }
+.admin-ballots-table tr:last-child td { border-bottom:none; }
+.ballot-status-pill { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; padding:3px 7px; border:1px solid var(--rule); display:inline-block; }
+.ballot-status-pill.submitted { color:var(--ink); border-color:var(--ink-faint); }
+.ballot-status-pill.draft { color:var(--ink-mid); border-color:var(--rule); }
+@media(max-width:560px){ .admin-ballots-table .col-email, .admin-ballots-table .col-updated { display:none; } }
+
 /* ── ANIM ── */
 .fade { animation:fi .4s ease both; }
 @keyframes fi { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
@@ -1004,6 +1015,15 @@ select option { background:#111; color:var(--ink); }
         <button class="btn fill" onclick="saveWinners()">Save winners</button>
         <div id="w-saved" class="msg ok" style="display:none"></div>
       </div>
+    </div>
+
+    <hr class="soft">
+
+    <!-- All ballots -->
+    <div class="admin-section">
+      <div class="admin-section-title">All ballots</div>
+      <div class="admin-section-desc">Every ballot created in the app, across all groups.</div>
+      <div id="admin-ballots-wrap"><div class="lb-empty">Loading…</div></div>
     </div>
 
   </div><!-- /admin-panel -->
@@ -2228,6 +2248,64 @@ function buildAdminPanel() {
       </div>`;
     c.appendChild(d);
   });
+
+  // All ballots table
+  loadAdminBallots();
+}
+
+async function loadAdminBallots() {
+  const wrap = document.getElementById('admin-ballots-wrap');
+  wrap.innerHTML = '<div class="lb-empty">Loading…</div>';
+
+  // Fetch all ballots
+  const { data: ballots, error } = await db
+    .from('ballots')
+    .select('id,name,email,status,group_id,updated_at')
+    .order('updated_at', { ascending: false });
+
+  if (error || !ballots || !ballots.length) {
+    wrap.innerHTML = '<div class="lb-empty">No ballots found.</div>';
+    return;
+  }
+
+  // Fetch groups for lookup
+  const groupIds = [...new Set(ballots.filter(b => b.group_id).map(b => b.group_id))];
+  let groupMap = {};
+  if (groupIds.length) {
+    const { data: groups } = await db.from('groups').select('id,name').in('id', groupIds);
+    if (groups) groups.forEach(g => groupMap[g.id] = g.name);
+  }
+
+  // Build table
+  let rows = ballots.map(b => {
+    const date = b.updated_at
+      ? new Date(b.updated_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+      : '—';
+    const group = b.group_id ? (groupMap[b.group_id] || '—') : '—';
+    const pill = `<span class="ballot-status-pill ${b.status}">${b.status || '—'}</span>`;
+    return `<tr>
+      <td>${esc(b.name || '—')}</td>
+      <td class="col-email" style="font-size:12px">${esc(b.email || '—')}</td>
+      <td>${pill}</td>
+      <td>${esc(group)}</td>
+      <td class="col-updated" style="font-size:12px">${date}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table class="admin-ballots-table">
+      <thead><tr>
+        <th>Name</th>
+        <th class="col-email">Email</th>
+        <th>Status</th>
+        <th>Group</th>
+        <th class="col-updated">Updated</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+      <button class="btn sm ghost" style="border:none" onclick="loadAdminBallots()">↻ Refresh</button>
+    </div>`;
 }
 
 function renderLockToggle() {
