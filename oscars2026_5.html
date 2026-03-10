@@ -349,7 +349,7 @@ select option { background:#111; color:var(--ink); }
 .lb-link  { font-family:'DM Mono',monospace; font-size:9px; }
 .lb-link a { color:var(--ink-light); text-decoration:none; border-bottom:1px solid var(--ink-faint); }
 .lb-link a:hover { color:var(--ink); border-bottom-color:var(--ink); }
-.lb-empty { padding:52px 0; text-align:center; font-style:italic; color:var(--ink-light); font-size:15px; line-height:1.9; }
+.lb-empty { padding:52px 0; text-align:center; font-family:'DM Mono',monospace; font-style:italic; color:var(--ink-light); font-size:13px; line-height:1.9; }
 
 /* ── ADMIN ── */
 .admin-unlock { max-width:360px; margin:40px auto 0; text-align:center; }
@@ -768,7 +768,7 @@ select option { background:#111; color:var(--ink); }
   </div>
 
   <div id="lb-inner"><div class="lb-empty">Loading…</div></div>
-  <div style="margin-top:24px"><button class="btn sm ghost" onclick="loadLeaderboard()">↻ Refresh</button></div>
+  <div style="margin-top:24px"><button class="btn sm ghost" style="border:none" onclick="loadLeaderboard()">↻ Refresh</button></div>
 </div>
 </div>
 
@@ -1946,7 +1946,7 @@ async function loadLeaderboard() {
     </div>`;
 
     if (!ranked.length) {
-      html += `<div class="lb-empty">No submitted ballots yet.<br>Be the first to lock in your predictions.</div>`;
+      html += `<div class="lb-empty">No submitted ballots yet …</div>`;
     } else {
       html += `<table class="lb-tbl">
         <thead><tr>
