@@ -699,8 +699,8 @@ select option { background:#111; color:var(--ink); }
       Submit Ballot — locks in your picks and adds you to the leaderboard. You can still edit until the ceremony begins.
     </p>
     <div class="action-row" id="action-btns">
-      <button class="btn ghost" id="save-draft-btn" style="border:none" onclick="saveBallot('draft')">Save Draft</button>
       <button class="btn fill"  id="submit-btn"    onclick="saveBallot('submitted')">Submit Ballot</button>
+      <button class="btn ghost" id="save-draft-btn" style="border:none" onclick="saveBallot('draft')">Save Draft</button>
     </div>
     <div id="ballot-err" class="msg err" style="display:none;margin-top:14px"></div>
   </div>
@@ -764,7 +764,7 @@ select option { background:#111; color:var(--ink); }
   </div>
 
   <div style="margin-bottom:16px">
-    <h2 style="font-family:'DM Sans',sans-serif;font-weight:400;font-size:24px;">Leaderboard<span id="lb-group-name" style="font-size:14px;font-weight:300;color:var(--ink-mid);margin-left:12px;font-style:italic"></span></h2>
+    <h2 id="lb-title" style="font-family:'DM Sans',sans-serif;font-weight:400;font-size:24px;">Leaderboard</h2>
   </div>
 
   <div id="lb-inner"><div class="lb-empty">Loading…</div></div>
@@ -1922,9 +1922,9 @@ function loadLeaderboardFake() {
   el.innerHTML = html;
 }
 async function loadLeaderboard() {
-  // Update group name in header
-  const lbGroupName = document.getElementById('lb-group-name');
-  if (lbGroupName) lbGroupName.textContent = currentGroupName ? currentGroupName : '';
+  // Update leaderboard title
+  const lbTitle = document.getElementById('lb-title');
+  if (lbTitle) lbTitle.textContent = currentGroupName ? `${currentGroupName}'s Leaderboard` : 'Leaderboard';
 
   const el = document.getElementById('lb-inner');
   el.innerHTML = '<div class="lb-empty">Loading…</div>';
