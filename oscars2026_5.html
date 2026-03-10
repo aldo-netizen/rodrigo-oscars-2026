@@ -916,7 +916,9 @@ const PERSON_SEARCHES = [
 ];
 
 // Manual overrides — for entries TMDB search gets wrong or misses entirely
-const MANUAL_POSTERS = {};
+const MANUAL_POSTERS = {
+  'KPop Demon Hunters': 'https://image.tmdb.org/t/p/w300/zT7Lhw3BhJbMkRqm9Zlx2YGMsY0.jpg',
+};
 
 async function tmdbGet(url) {
   const r = await fetch(url, { headers: { Authorization: `Bearer ${CONFIG.TMDB_TOKEN}` } });
@@ -1073,7 +1075,7 @@ const CATS = [
     {m:"Sinners",               f:"Ludwig Göransson",   filmKey:"Sinners"},
   ]},
   {id:"song", name:"Music — Original Song", noms:[
-    {m:'"Golden"',              f:"KPop Demon Hunters"},
+    {m:'"Golden"',              f:"KPop Demon Hunters",        filmKey:"KPop Demon Hunters"},
     {m:'"Train Dreams"',        f:"Train Dreams",               filmKey:"Train Dreams"},
     {m:'"Dear Me"',             f:"Diane Warren: Relentless"},
     {m:'"I Lied To You"',       f:"Sinners",                    filmKey:"Sinners"},
