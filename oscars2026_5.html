@@ -1397,6 +1397,8 @@ let isGroupLocked    = false;
   // Load group context if ?group=CODE present
   const groupCode = params.get('group');
   if (groupCode) {
+    // Hide default CTAs immediately to prevent flash while group loads
+    document.getElementById('landing-default-ctas').style.display = 'none';
     try {
       const { data: grp } = await db.from('groups').select('id,name,code,locked').eq('code', groupCode.toUpperCase()).maybeSingle();
       if (grp) { currentGroupId = grp.id; currentGroupCode = grp.code; currentGroupName = grp.name; isGroupLocked = grp.locked || false; }
