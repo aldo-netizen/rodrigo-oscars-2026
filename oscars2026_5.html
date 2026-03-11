@@ -1407,6 +1407,9 @@ let isGroupLocked    = false;
 
   await Promise.all([fetchMeta(), loadPosters()]); // winners + lock state + posters
 
+  // Always prepare the landing page so it's correct if user navigates back
+  renderLanding();
+
   // Group admin
   if (params.has('admin') && currentGroupId)  { goto('page-group-admin'); return; }
   // Global admin (no group context)
@@ -1424,7 +1427,6 @@ let isGroupLocked    = false;
     return;
   }
 
-  renderLanding();
   goto('page-landing');
 })();
 
