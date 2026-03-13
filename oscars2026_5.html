@@ -615,8 +615,9 @@ select option { background:#111; color:var(--ink); }
       <div class="landing-group-label">you're invited to</div>
       <div class="landing-group-title" id="landing-group-title"></div>
       <div class="landing-ctas">
-        <button class="landing-cta-btn" onclick="goToBallot()">Enter your ballot</button>
-        <button class="landing-cta-btn" onclick="goto('page-leaderboard'); loadLeaderboard()">View leaderboard</button>
+        <button id="landing-enter-ballot-btn" class="landing-cta-btn" onclick="goToBallot()">Enter your ballot</button>
+        <button id="landing-leaderboard-btn" class="landing-cta-btn" onclick="goto('page-leaderboard'); loadLeaderboard()">View leaderboard</button>
+        <button id="landing-results-cta" class="landing-cta-btn" style="display:none" onclick="goto('page-leaderboard'); loadLeaderboard(); burstResultsCelebration()">See the results →</button>
       </div>
     </div>
   </div>
@@ -1006,6 +1007,31 @@ select option { background:#111; color:var(--ink); }
 
     <hr class="soft">
 
+    <!-- Results mode -->
+    <div class="admin-section">
+      <div class="admin-section-title">Results mode</div>
+      <p class="admin-section-desc">When enabled, guests see a "See the results →" CTA on the landing page and the leaderboard shows as Final Results. Turn this on after the ceremony is over.</p>
+      <div class="lock-toggle">
+        <div class="lock-toggle-info">
+          <div class="lock-toggle-label">Current status: <span id="results-mode-txt">—</span></div>
+          <div class="lock-toggle-desc" id="results-mode-desc-status"></div>
+        </div>
+        <button class="btn sm" id="results-mode-btn" onclick="toggleResultsMode()">—</button>
+      </div>
+      <div id="results-mode-msg" class="msg ok" style="display:none"></div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-section-title">Results email</div>
+      <p class="admin-section-desc">Send each participant their final score and group ranking. Only sends to submitted ballots.</p>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <button class="btn fill" onclick="sendResultsEmails()">Send results emails</button>
+        <div id="results-email-msg" class="msg ok" style="display:none"></div>
+      </div>
+    </div>
+
+    <hr class="soft">
+
     <!-- Winners -->
     <div class="admin-section">
       <div class="admin-section-title">Enter winners</div>
@@ -1046,6 +1072,7 @@ const CONFIG = {
   EMAILJS_DRAFT_TEMPLATE:   'template_6eqfa8f',    // sent on Save Draft
   EMAILJS_SUBMIT_TEMPLATE:  'template_9wn3ndp',   // sent on Submit Ballot
   EMAILJS_GROUP_TEMPLATE:   'template_group_created', // sent to group admin on creation — create this in EmailJS
+  EMAILJS_RESULTS_TEMPLATE: 'template_results',       // sent after ceremony — create this in EmailJS
 
   ADMIN_PASSWORD: 'oscars2026',  // change this!
 
@@ -1091,6 +1118,20 @@ const CONFIG = {
 
    You can still edit your picks until the ceremony begins.
    May the best predictor win. See you March 15.
+
+   ── RESULTS TEMPLATE ──
+   Subject: The ceremony is over — here's how you did 🏆
+
+   Hi {{to_name}},
+
+   The Oscars are over, the envelopes have been opened, and the results are in.
+
+   You got {{final_score}} out of {{total_cats}} right,
+   landing you at #{{rank}} out of {{total_players}} players.
+
+   <a href="{{ballot_link}}">See your final ballot →</a>
+
+   Thanks for playing. See you next year.
 ───────────────────────────────────────────── */
 
 /* ─────────────────────────────────────────────
@@ -1377,6 +1418,7 @@ let currentId      = null;   // ballot UUID
 let currentStatus  = null;   // 'draft' | 'submitted'
 let cachedWinners  = {};
 let isLocked       = false;
+let resultsMode    = false;
 let ballotBuilt    = false;
 
 // Group context (set from ?group=CODE in URL)
@@ -1468,6 +1510,33 @@ function renderLanding() {
     document.getElementById('landing-default-ctas').style.display = 'flex';
     document.getElementById('landing-group-context').style.display = 'none';
   }
+  applyResultsMode();
+}
+
+function applyResultsMode() {
+  // Update group landing CTAs
+  const ctaResults = document.getElementById('landing-results-cta');
+  const ctaEnter   = document.getElementById('landing-enter-ballot-btn');
+  const ctaLb      = document.getElementById('landing-leaderboard-btn');
+  if (ctaResults) ctaResults.style.display = (resultsMode && currentGroupId) ? 'inline' : 'none';
+  if (ctaEnter)   ctaEnter.style.display   = resultsMode ? 'none' : 'inline';
+  if (ctaLb)      ctaLb.style.display      = resultsMode ? 'none' : 'inline';
+
+  // Update locked banner copy
+  const banner = document.getElementById('locked-banner');
+  if (banner) {
+    if (resultsMode) {
+      banner.querySelector('strong').textContent = 'The ceremony is over';
+      banner.querySelector('p').textContent = 'The Oscars are done — no further edits. Check the final leaderboard to see how you placed.';
+    } else {
+      banner.querySelector('strong').textContent = 'Ballots are locked';
+      banner.querySelector('p').textContent = 'The ceremony has begun — no further edits are permitted. You can still view your ballot and follow the leaderboard.';
+    }
+  }
+
+  // Update results toggle UI if admin panel is open
+  const rBtn = document.getElementById('results-mode-btn');
+  if (rBtn) renderResultsToggle();
 }
 
 async function joinGroupByCode() {
@@ -2146,7 +2215,9 @@ function loadLeaderboardFake() {
 async function loadLeaderboard() {
   // Update leaderboard title
   const lbTitle = document.getElementById('lb-title');
-  if (lbTitle) lbTitle.textContent = currentGroupName ? `${currentGroupName}'s Leaderboard` : 'Leaderboard';
+  if (lbTitle) lbTitle.textContent = resultsMode
+    ? (currentGroupName ? `${currentGroupName} — Final Results` : 'Final Results')
+    : (currentGroupName ? `${currentGroupName}'s Leaderboard` : 'Leaderboard');
   // Show admin button only for group context
   const lbAdminBtn = document.getElementById('lb-admin-btn');
   if (lbAdminBtn) lbAdminBtn.style.display = currentGroupId ? 'block' : 'none';
@@ -2165,10 +2236,14 @@ async function loadLeaderboard() {
       .map(b => ({ ...b, score: calcScore(b.picks, cachedWinners) }))
       .sort((a, b) => b.score - a.score || tbSort(a, b));
 
-    let html = `<div class="lb-meta">
-      <span>Categories revealed: ${revealed}&thinsp;/&thinsp;${CATS.length}</span>
-      <span>Players: ${ranked.length}</span>
-    </div>`;
+    let html = resultsMode
+      ? `<div class="lb-meta"><span>${CATS.length} categories · ${ranked.length} players</span></div>`
+      : `<div class="lb-meta">
+          <span>Categories revealed: ${revealed}&thinsp;/&thinsp;${CATS.length}</span>
+          <span>Players: ${ranked.length}</span>
+        </div>`;
+
+    const canView = isLocked || isGroupLocked || resultsMode;
 
     if (!ranked.length) {
       html += `<div class="lb-empty">No submitted ballots yet …</div>`;
@@ -2177,15 +2252,35 @@ async function loadLeaderboard() {
         <thead><tr>
           <th>#</th><th>Name</th>
           <th class="r">Score</th>
+          ${canView ? '<th class="r"></th>' : ''}
         </tr></thead><tbody>
-        ${ranked.map((r,i) => `<tr>
-          <td class="lb-rank">${i+1}</td>
-          <td class="lb-name"><em>${esc(r.name)}</em></td>
-          <td class="lb-score r">${r.score}</td>
-        </tr>`).join('')}
+        ${ranked.map((r,i) => {
+          const isMe = r.id === currentId;
+          const rowStyle = resultsMode && isMe ? ' style="background:rgba(249,195,0,0.08);"' : '';
+          const nameCell = isMe && resultsMode
+            ? `<em>${esc(r.name)}</em> <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;color:var(--ink-mid)">YOU</span>`
+            : `<em>${esc(r.name)}</em>`;
+          const scoreCell = resultsMode
+            ? `${r.score}&thinsp;/&thinsp;${CATS.length}`
+            : `${r.score}`;
+          const viewCell = canView
+            ? `<td class="lb-link r"><a class="lb-view-link" href="#" onclick="event.preventDefault();renderViewBallot('${r.id}').then(()=>goto('page-view-ballot'))">view →</a></td>`
+            : '';
+          return `<tr${rowStyle}>
+            <td class="lb-rank">${i+1}</td>
+            <td class="lb-name">${nameCell}</td>
+            <td class="lb-score r">${scoreCell}</td>
+            ${viewCell}
+          </tr>`;
+        }).join('')}
         </tbody></table>`;
     }
     el.innerHTML = html;
+
+    // Re-update title in case resultsMode changed during fetch
+    if (lbTitle) lbTitle.textContent = resultsMode
+      ? (currentGroupName ? `${currentGroupName} — Final Results` : 'Final Results')
+      : (currentGroupName ? `${currentGroupName}'s Leaderboard` : 'Leaderboard');
   } catch(err) {
     el.innerHTML = `<div class="lb-empty">${esc(err.message)}</div>`;
   }
@@ -2203,9 +2298,14 @@ function tbSort(a, b) {
 ───────────────────────────────────────────── */
 async function fetchMeta() {
   try {
-    const { data } = await db.from('winners').select('picks,locked').eq('id', 1).single();
-    if (data) { cachedWinners = data.picks || {}; isLocked = data.locked || false; }
+    const { data } = await db.from('winners').select('picks,locked,results_mode').eq('id', 1).single();
+    if (data) {
+      cachedWinners = data.picks        || {};
+      isLocked      = data.locked       || false;
+      resultsMode   = data.results_mode || false;
+    }
   } catch(e) {}
+  applyResultsMode();
 }
 
 function calcScore(picks, wins) {
@@ -2227,6 +2327,7 @@ function unlockAdmin() {
 function buildAdminPanel() {
   // Lock toggle
   renderLockToggle();
+  renderResultsToggle();
 
   // Winners form
   const c = document.getElementById('wadmin'); c.innerHTML = '';
@@ -2376,6 +2477,116 @@ async function toggleLock() {
     showToast(isLocked ? 'Ballots locked' : 'Ballots unlocked');
   } catch(err) { showToast('Error: ' + err.message); }
   finally { setBusy(false); }
+}
+
+function renderResultsToggle() {
+  const txt  = document.getElementById('results-mode-txt');
+  const desc = document.getElementById('results-mode-desc-status');
+  const btn  = document.getElementById('results-mode-btn');
+  if (!txt || !btn) return;
+  if (resultsMode) {
+    txt.textContent  = 'On';
+    desc.textContent = 'Guests can see the final results and their placement.';
+    btn.textContent  = 'Turn off results mode';
+    btn.className    = 'btn sm warn';
+  } else {
+    txt.textContent  = 'Off';
+    desc.textContent = 'Results are not yet shown to guests.';
+    btn.textContent  = 'Turn on results mode';
+    btn.className    = 'btn sm';
+  }
+}
+
+async function toggleResultsMode() {
+  setBusy(true);
+  try {
+    const next = !resultsMode;
+    await db.from('winners').update({ results_mode: next }).eq('id', 1);
+    resultsMode = next;
+    renderResultsToggle();
+    applyResultsMode();
+    const m = document.getElementById('results-mode-msg');
+    m.textContent = resultsMode
+      ? 'Results mode is on. Guests can now see the final results.'
+      : 'Results mode is off.';
+    m.style.display = 'block';
+    setTimeout(() => m.style.display = 'none', 3500);
+    showToast(resultsMode ? 'Results mode on' : 'Results mode off');
+  } catch(err) { showToast('Error: ' + err.message); }
+  finally { setBusy(false); }
+}
+
+async function sendResultsEmails() {
+  const btn = event.target;
+  const msg = document.getElementById('results-email-msg');
+  btn.disabled = true;
+  msg.style.display = 'none';
+  try {
+    await fetchMeta();
+    // Fetch all submitted ballots with group info
+    const { data: ballots, error } = await db
+      .from('ballots')
+      .select('id,name,email,picks,group_id')
+      .eq('status', 'submitted');
+    if (error) throw error;
+    if (!ballots || !ballots.length) { msg.textContent = 'No submitted ballots found.'; msg.style.display = 'block'; return; }
+
+    // Group ballots by group_id (null = no group)
+    const groups = {};
+    ballots.forEach(b => {
+      const key = b.group_id || '__none__';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(b);
+    });
+
+    // For each group, sort by score and assign rank
+    const ranked = [];
+    Object.values(groups).forEach(grp => {
+      const sorted = grp
+        .map(b => ({ ...b, score: calcScore(b.picks || {}, cachedWinners) }))
+        .sort((a, b) => b.score - a.score);
+      sorted.forEach((b, i) => ranked.push({ ...b, rank: i + 1, total_players: sorted.length }));
+    });
+
+    // Send emails one by one
+    let sent = 0;
+    for (const b of ranked) {
+      if (!b.email) continue;
+      msg.textContent = `Sending ${sent + 1} of ${ranked.length}…`;
+      msg.style.display = 'block';
+      const link = `${CONFIG.SITE_URL}/oscars2026_5.html?ballot=${b.id}`;
+      try {
+        await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_RESULTS_TEMPLATE, {
+          to_name:      b.name,
+          to_email:     b.email,
+          ballot_link:  link,
+          final_score:  b.score,
+          total_cats:   CATS.length,
+          rank:         b.rank,
+          total_players: b.total_players,
+        });
+        sent++;
+      } catch(e) { /* skip failed sends */ }
+    }
+    msg.textContent = `Done — sent ${sent} of ${ranked.length} emails.`;
+    showToast(`Results emails sent (${sent})`);
+  } catch(err) { msg.textContent = 'Error: ' + err.message; msg.style.display = 'block'; }
+  finally { btn.disabled = false; }
+}
+
+let resultsBursted = false;
+function burstResultsCelebration() {
+  if (!resultsMode || resultsBursted) return;
+  resultsBursted = true;
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight * 0.28;
+  const count = 12;
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+    const dist  = 80 + Math.random() * 200;
+    setTimeout(() => spawnImage(cx + Math.cos(angle) * dist, cy + Math.sin(angle) * dist), i * 55);
+  }
+  setTimeout(fadeAllImages, 2500);
 }
 
 async function saveWinners() {
