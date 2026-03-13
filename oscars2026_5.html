@@ -2177,15 +2177,11 @@ async function loadLeaderboard() {
         <thead><tr>
           <th>#</th><th>Name</th>
           <th class="r">Score</th>
-          <th class="r">Tiebreaker</th>
-          <th class="r">Ballot</th>
         </tr></thead><tbody>
         ${ranked.map((r,i) => `<tr>
           <td class="lb-rank">${i+1}</td>
           <td class="lb-name"><em>${esc(r.name)}</em></td>
           <td class="lb-score r">${r.score}</td>
-          <td class="lb-tb r">${r.tiebreaker !== null && r.tiebreaker !== undefined ? r.tiebreaker : '—'}</td>
-          <td class="lb-link r"><a href="${buildLink(r.id)}">view →</a></td>
         </tr>`).join('')}
         </tbody></table>`;
     }
