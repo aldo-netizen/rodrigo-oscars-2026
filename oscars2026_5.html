@@ -2303,9 +2303,44 @@ async function loadAdminBallots() {
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn sm" onclick="exportAdminBallots()">↓ Export CSV</button>
       <button class="btn sm ghost" style="border:none" onclick="loadAdminBallots()">↻ Refresh</button>
     </div>`;
+}
+
+async function exportAdminBallots() {
+  const { data: ballots, error } = await db
+    .from('ballots')
+    .select('id,name,email,status,group_id,updated_at')
+    .order('updated_at', { ascending: false });
+
+  if (error || !ballots || !ballots.length) return;
+
+  const groupIds = [...new Set(ballots.filter(b => b.group_id).map(b => b.group_id))];
+  let groupMap = {};
+  if (groupIds.length) {
+    const { data: groups } = await db.from('groups').select('id,name').in('id', groupIds);
+    if (groups) groups.forEach(g => groupMap[g.id] = g.name);
+  }
+
+  const header = ['Name','Email','Status','Group','Updated'];
+  const rows = ballots.map(b => [
+    b.name || '',
+    b.email || '',
+    b.status || '',
+    b.group_id ? (groupMap[b.group_id] || '') : '',
+    b.updated_at ? new Date(b.updated_at).toLocaleString() : ''
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ballots-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function renderLockToggle() {
