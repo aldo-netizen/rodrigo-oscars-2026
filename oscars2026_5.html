@@ -1815,16 +1815,13 @@ function updateBallotUI() {
   const tbInp = document.getElementById('tb-inp'); if (tbInp) tbInp.readOnly = locked;
 
   // Action section
-  const actBtns    = document.getElementById('action-btns');
-  const actHeading = document.getElementById('action-heading');
-  const actDesc    = document.getElementById('action-desc');
+  const actBtns = document.getElementById('action-btns');
+  const actDesc = document.getElementById('action-desc');
 
   if (locked) {
     actBtns.style.display = 'none';
-    actHeading.textContent = 'Ballots are locked';
     actDesc.innerHTML = '<em>The ceremony has begun. Your picks are frozen — check the leaderboard to follow your score.</em>';
   } else if (isSubmitted) {
-    actHeading.textContent = 'Update your ballot';
     actDesc.innerHTML = `<strong style="font-style:normal;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase">Already submitted</strong> — you can still edit your picks and resubmit until the ceremony begins.`;
     actBtns.style.display = 'flex';
     document.getElementById('save-draft-btn').style.display = 'none';
