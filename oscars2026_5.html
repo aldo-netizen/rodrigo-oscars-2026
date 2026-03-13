@@ -1022,7 +1022,7 @@ select option { background:#111; color:var(--ink); }
     <!-- All ballots -->
     <div class="admin-section">
       <div class="admin-section-title">All ballots</div>
-      <div class="admin-section-desc">Every ballot created in the app, across all groups.</div>
+      <div class="admin-section-desc">Every ballot created in the app, across all groups. <span id="admin-ballots-count" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-mid);"></span></div>
       <div id="admin-ballots-wrap"><div class="lb-empty">Loading…</div></div>
     </div>
 
@@ -2262,8 +2262,11 @@ async function loadAdminBallots() {
 
   if (error || !ballots || !ballots.length) {
     wrap.innerHTML = '<div class="lb-empty">No ballots found.</div>';
+    document.getElementById('admin-ballots-count').textContent = '';
     return;
   }
+
+  document.getElementById('admin-ballots-count').textContent = `(${ballots.length} total)`;
 
   // Fetch groups for lookup
   const groupIds = [...new Set(ballots.filter(b => b.group_id).map(b => b.group_id))];
