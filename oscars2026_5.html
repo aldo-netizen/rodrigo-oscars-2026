@@ -307,6 +307,25 @@ select option { background:#111; color:var(--ink); }
 }
 @media(max-width:480px){ .action-divider { display:none; } }
 
+/* ── RESULTS CONFIRM MODAL ── */
+.results-modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:2000;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.results-modal {
+  background:#000; border:1px solid var(--rule); padding:40px;
+  max-width:400px; width:100%;
+}
+.results-modal-title {
+  font-family:'DM Sans',sans-serif; font-size:20px; font-weight:400;
+  color:var(--ink); margin-bottom:12px;
+}
+.results-modal-body {
+  font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink-mid);
+  line-height:1.75; margin-bottom:32px;
+}
+.results-modal-actions { display:flex; gap:12px; flex-wrap:wrap; }
+
 /* ── LOCKED BANNER ── */
 .locked-banner {
   border:1px solid #cf7f3a; padding:16px 20px; margin-bottom:32px;
@@ -1010,24 +1029,16 @@ select option { background:#111; color:var(--ink); }
     <!-- Results mode -->
     <div class="admin-section">
       <div class="admin-section-title">Results mode</div>
-      <p class="admin-section-desc">When enabled, guests see a "See the results →" CTA on the landing page and the leaderboard shows as Final Results. Turn this on after the ceremony is over.</p>
+      <p class="admin-section-desc">Turns on results mode and automatically sends every participant their final score and group ranking. Only do this after the ceremony is over.</p>
       <div class="lock-toggle">
         <div class="lock-toggle-info">
           <div class="lock-toggle-label">Current status: <span id="results-mode-txt">—</span></div>
           <div class="lock-toggle-desc" id="results-mode-desc-status"></div>
         </div>
-        <button class="btn sm" id="results-mode-btn" onclick="toggleResultsMode()">—</button>
+        <button class="btn fill" id="results-mode-btn" onclick="confirmResultsMode()">—</button>
       </div>
       <div id="results-mode-msg" class="msg ok" style="display:none"></div>
-    </div>
-
-    <div class="admin-section">
-      <div class="admin-section-title">Results email</div>
-      <p class="admin-section-desc">Send each participant their final score and group ranking. Only sends to submitted ballots.</p>
-      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-        <button class="btn fill" onclick="sendResultsEmails()">Send results emails</button>
-        <div id="results-email-msg" class="msg ok" style="display:none"></div>
-      </div>
+      <div id="results-email-msg" class="msg ok" style="display:none"></div>
     </div>
 
     <hr class="soft">
@@ -2488,38 +2499,63 @@ function renderResultsToggle() {
     txt.textContent  = 'On';
     desc.textContent = 'Guests can see the final results and their placement.';
     btn.textContent  = 'Turn off results mode';
-    btn.className    = 'btn sm warn';
+    btn.className    = 'btn warn';
+    btn.onclick      = toggleResultsMode;
   } else {
     txt.textContent  = 'Off';
     desc.textContent = 'Results are not yet shown to guests.';
     btn.textContent  = 'Turn on results mode';
-    btn.className    = 'btn sm';
+    btn.className    = 'btn fill';
+    btn.onclick      = confirmResultsMode;
   }
 }
 
-async function toggleResultsMode() {
+function confirmResultsMode() {
+  document.getElementById('results-modal-overlay').style.display = 'flex';
+}
+
+function closeResultsModal() {
+  document.getElementById('results-modal-overlay').style.display = 'none';
+}
+
+async function confirmAndActivateResults() {
+  closeResultsModal();
   setBusy(true);
   try {
-    const next = !resultsMode;
-    await db.from('winners').update({ results_mode: next }).eq('id', 1);
-    resultsMode = next;
+    await db.from('winners').update({ results_mode: true }).eq('id', 1);
+    resultsMode = true;
     renderResultsToggle();
     applyResultsMode();
     const m = document.getElementById('results-mode-msg');
-    m.textContent = resultsMode
-      ? 'Results mode is on. Guests can now see the final results.'
-      : 'Results mode is off.';
+    m.textContent = 'Results mode is on. Guests can now see the final results.';
+    m.style.display = 'block';
+    setTimeout(() => m.style.display = 'none', 4000);
+    showToast('Results mode on — sending emails…');
+  } catch(err) { showToast('Error: ' + err.message); setBusy(false); return; }
+  finally { setBusy(false); }
+  // Send emails automatically
+  await sendResultsEmails();
+}
+
+async function toggleResultsMode() {
+  // Only handles turning OFF (turning on goes through confirmAndActivateResults)
+  setBusy(true);
+  try {
+    await db.from('winners').update({ results_mode: false }).eq('id', 1);
+    resultsMode = false;
+    renderResultsToggle();
+    applyResultsMode();
+    const m = document.getElementById('results-mode-msg');
+    m.textContent = 'Results mode is off.';
     m.style.display = 'block';
     setTimeout(() => m.style.display = 'none', 3500);
-    showToast(resultsMode ? 'Results mode on' : 'Results mode off');
+    showToast('Results mode off');
   } catch(err) { showToast('Error: ' + err.message); }
   finally { setBusy(false); }
 }
 
 async function sendResultsEmails() {
-  const btn = event.target;
   const msg = document.getElementById('results-email-msg');
-  btn.disabled = true;
   msg.style.display = 'none';
   try {
     await fetchMeta();
@@ -2571,7 +2607,6 @@ async function sendResultsEmails() {
     msg.textContent = `Done — sent ${sent} of ${ranked.length} emails.`;
     showToast(`Results emails sent (${sent})`);
   } catch(err) { msg.textContent = 'Error: ' + err.message; msg.style.display = 'block'; }
-  finally { btn.disabled = false; }
 }
 
 let resultsBursted = false;
@@ -2911,5 +2946,17 @@ setTimeout(updateTopbarHeight, 100);
 </script>
 
 <footer class="site-footer">Made by Studio Rodrigo for film fans everywhere</footer>
+
+<!-- Results mode confirmation modal -->
+<div id="results-modal-overlay" class="results-modal-overlay" style="display:none" onclick="if(event.target===this)closeResultsModal()">
+  <div class="results-modal">
+    <div class="results-modal-title">Turn on results mode?</div>
+    <p class="results-modal-body">This will show the final results to all guests and send everyone their score and ranking by email. This should only be done after the ceremony is over.</p>
+    <div class="results-modal-actions">
+      <button class="btn fill" onclick="confirmAndActivateResults()">Yes, send results</button>
+      <button class="btn ghost" style="border:none" onclick="closeResultsModal()">Cancel</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
