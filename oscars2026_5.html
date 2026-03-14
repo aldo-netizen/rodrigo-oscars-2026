@@ -1083,7 +1083,8 @@ const CONFIG = {
   EMAILJS_DRAFT_TEMPLATE:   'template_6eqfa8f',    // sent on Save Draft
   EMAILJS_SUBMIT_TEMPLATE:  'template_9wn3ndp',   // sent on Submit Ballot
   EMAILJS_GROUP_TEMPLATE:   'template_group_created', // sent to group admin on creation — create this in EmailJS
-  EMAILJS_RESULTS_TEMPLATE: 'template_results',       // sent after ceremony — create this in EmailJS
+  EMAILJS_RESULTS_TEMPLATE:   'template_results',     // sent after ceremony — create this in EmailJS
+  EMAILJS_REMINDER_TEMPLATE:  'template_reminder',    // sent to draft ballots day before — create this in EmailJS
 
   ADMIN_PASSWORD: 'oscars2026',  // change this!
 
@@ -1143,6 +1144,20 @@ const CONFIG = {
    <a href="{{ballot_link}}">See your final ballot →</a>
 
    Thanks for playing. See you next year.
+
+   ── REMINDER TEMPLATE ──
+   Subject: Last chance — the ceremony is tomorrow
+
+   Hi {{to_name}},
+
+   You started a ballot for Rachel & Aldo's Oscar Party but haven't submitted yet.
+   Your picks won't count until you do.
+
+   The ceremony is tomorrow. You've still got time.
+
+   <a href="{{ballot_link}}">Finish and submit your ballot →</a>
+
+   Good luck.
 ───────────────────────────────────────────── */
 
 /* ─────────────────────────────────────────────
