@@ -2074,7 +2074,7 @@ async function renderViewBallot(id) {
 
     // Topbar right
     tr.innerHTML = `
-      ${!isLocked && !isGroupLocked && !isDraft && id === currentId ? `<button class="picks-toggle" onclick="loadBallotForEdit()"><span class="picks-toggle-label">Edit ballot</span></button>` : ''}
+      ${!isLocked && !isGroupLocked && !resultsMode && !isDraft && id === currentId ? `<button class="picks-toggle" onclick="loadBallotForEdit()"><span class="picks-toggle-label">Edit ballot</span></button>` : ''}
       ${(isLocked || isGroupLocked) ? '<span class="status-pill locked-notice">Locked</span>' : ''}
     `;
 
