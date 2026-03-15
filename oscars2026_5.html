@@ -2658,14 +2658,15 @@ async function saveWinners() {
   });
   setBusy(true);
   try {
-    await db.from('winners').update({ picks, updated_at: new Date().toISOString() }).eq('id', 1);
+    const { error } = await db.from('winners').update({ picks, updated_at: new Date().toISOString() }).eq('id', 1);
+    if (error) throw error;
     cachedWinners = picks;
     showToast('Winners saved');
     const m = document.getElementById('w-saved');
-    m.textContent = 'Winners saved — leaderboard scores updated.';
+    m.textContent = `Winners saved — ${Object.keys(picks).length} of ${CATS.length} categories entered.`;
     m.style.display = 'block';
-    setTimeout(() => m.style.display = 'none', 3000);
-  } catch(err) { showToast('Error: ' + err.message); }
+    setTimeout(() => m.style.display = 'none', 4000);
+  } catch(err) { showToast('Error saving: ' + (err.message || err)); }
   finally { setBusy(false); }
 }
 
