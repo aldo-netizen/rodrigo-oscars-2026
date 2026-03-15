@@ -2018,7 +2018,7 @@ async function saveBallot(status) {
 
 function buildLink(id, edit = false) {
   const file = window.location.pathname.split('/').pop() || '';
-  let url = `${CONFIG.SITE_URL}${file}?ballot=${id}`;
+  let url = `${CONFIG.SITE_URL}/${file}?ballot=${id}`;
   if (currentGroupCode) url += `&group=${currentGroupCode}`;
   if (edit) url += '&edit=1';
   return url;
