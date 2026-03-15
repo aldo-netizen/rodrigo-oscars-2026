@@ -2615,8 +2615,8 @@ async function sendResultsEmails() {
       msg.style.display = 'block';
       const groupCode = b.group_id ? groupCodeMap[b.group_id] : null;
       const link = groupCode
-        ? `${CONFIG.SITE_URL}/oscars2026_5.html?group=${groupCode}&ballot=${b.id}`
-        : `${CONFIG.SITE_URL}/oscars2026_5.html?ballot=${b.id}`;
+        ? `${CONFIG.SITE_URL}/oscars2026_5.html?group=${groupCode}`
+        : `${CONFIG.SITE_URL}/oscars2026_5.html`;
       try {
         await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_RESULTS_TEMPLATE, {
           to_name:      b.name,
