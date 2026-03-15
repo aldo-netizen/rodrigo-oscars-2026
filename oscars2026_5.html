@@ -2590,6 +2590,14 @@ async function sendResultsEmails() {
       groups[key].push(b);
     });
 
+    // Fetch group codes for all group_ids so we can build group-scoped links
+    const groupIds = Object.keys(groups).filter(k => k !== '__none__');
+    const groupCodeMap = {};
+    if (groupIds.length) {
+      const { data: grpData } = await db.from('groups').select('id,code').in('id', groupIds);
+      if (grpData) grpData.forEach(g => groupCodeMap[g.id] = g.code);
+    }
+
     // For each group, sort by score and assign rank
     const ranked = [];
     Object.values(groups).forEach(grp => {
@@ -2605,7 +2613,10 @@ async function sendResultsEmails() {
       if (!b.email) continue;
       msg.textContent = `Sending ${sent + 1} of ${ranked.length}…`;
       msg.style.display = 'block';
-      const link = `${CONFIG.SITE_URL}/oscars2026_5.html?ballot=${b.id}`;
+      const groupCode = b.group_id ? groupCodeMap[b.group_id] : null;
+      const link = groupCode
+        ? `${CONFIG.SITE_URL}/oscars2026_5.html?group=${groupCode}&ballot=${b.id}`
+        : `${CONFIG.SITE_URL}/oscars2026_5.html?ballot=${b.id}`;
       try {
         await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_RESULTS_TEMPLATE, {
           to_name:      b.name,
