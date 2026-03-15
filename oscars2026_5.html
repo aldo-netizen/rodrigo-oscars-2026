@@ -2658,7 +2658,7 @@ async function saveWinners() {
   });
   setBusy(true);
   try {
-    const { error } = await db.from('winners').update({ picks, updated_at: new Date().toISOString() }).eq('id', 1);
+    const { error } = await db.from('winners').update({ picks }).eq('id', 1);
     if (error) throw error;
     cachedWinners = picks;
     showToast('Winners saved');
