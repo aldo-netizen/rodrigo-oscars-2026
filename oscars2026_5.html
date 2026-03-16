@@ -2377,7 +2377,7 @@ function buildAdminPanel() {
       <div class="wr-noms">
         ${cat.noms.map(n =>
           `<label class="wr-nom">
-            <input type="checkbox" name="w-${cat.id}" value="${n.m}" ${winners.includes(n.m)?'checked':''}>
+            <input type="checkbox" name="w-${cat.id}" value="${n.m.replace(/"/g,'&quot;')}" ${winners.includes(n.m)?'checked':''}>
             <span>${n.m}${n.f?' — '+n.f:''}</span>
           </label>`
         ).join('')}
