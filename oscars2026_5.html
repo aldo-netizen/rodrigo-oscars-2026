@@ -2108,7 +2108,8 @@ async function renderViewBallot(id) {
       const winner = cachedWinners[cat.id];
       let result = '';
       if (!isDraft && winner) {
-        result = pick === winner
+        const isCorrect = Array.isArray(winner) ? winner.includes(pick) : pick === winner;
+        result = isCorrect
           ? '<span class="vb-result y">✓</span>'
           : '<span class="vb-result n">✗</span>';
       }
