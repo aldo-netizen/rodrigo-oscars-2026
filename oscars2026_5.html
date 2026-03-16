@@ -399,8 +399,11 @@ select option { background:#111; color:var(--ink); }
 .lock-toggle-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink-mid); margin-bottom:4px; }
 .lock-toggle-desc  { font-family:'DM Sans',sans-serif; font-size:13px; font-style:normal; color:var(--ink-light); line-height:1.6; }
 
-.wr { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:end; padding:18px 0; border-bottom:1px solid var(--rule); }
+.wr { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; padding:18px 0; border-bottom:1px solid var(--rule); }
 .wr-cat { font-family:'DM Mono',monospace; font-size:10px; font-weight:400; letter-spacing:0.12em; text-transform:uppercase; padding-top:4px; }
+.wr-noms { display:flex; flex-direction:column; gap:8px; margin-top:4px; }
+.wr-nom { display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; }
+.wr-nom input[type=checkbox] { accent-color:var(--gold); width:14px; height:14px; flex-shrink:0; cursor:pointer; }
 @media(max-width:480px){ .wr { grid-template-columns:1fr; gap:8px; } }
 
 /* ── GROUP ADMIN MEMBERS ── */
@@ -2335,7 +2338,13 @@ async function fetchMeta() {
 }
 
 function calcScore(picks, wins) {
-  return CATS.reduce((s,c) => s + (wins[c.id] && picks[c.id] === wins[c.id] ? 1 : 0), 0);
+  return CATS.reduce((s,c) => {
+    const w = wins[c.id];
+    const p = picks[c.id];
+    if (!w || !p) return s;
+    const hit = Array.isArray(w) ? w.includes(p) : p === w;
+    return s + (hit ? 1 : 0);
+  }, 0);
 }
 
 /* ─────────────────────────────────────────────
@@ -2358,17 +2367,19 @@ function buildAdminPanel() {
   // Winners form
   const c = document.getElementById('wadmin'); c.innerHTML = '';
   CATS.forEach(cat => {
+    const winners = Array.isArray(cachedWinners[cat.id])
+      ? cachedWinners[cat.id]
+      : cachedWinners[cat.id] ? [cachedWinners[cat.id]] : [];
     const d = document.createElement('div'); d.className = 'wr';
     d.innerHTML = `
       <div class="wr-cat">${cat.name}</div>
-      <div>
-        <label class="fl">Winner</label>
-        <select id="w-${cat.id}">
-          <option value="">— not yet announced —</option>
-          ${cat.noms.map(n =>
-            `<option value="${n.m}" ${cachedWinners[cat.id]===n.m?'selected':''}>${n.m}${n.f?' — '+n.f:''}</option>`
-          ).join('')}
-        </select>
+      <div class="wr-noms">
+        ${cat.noms.map(n =>
+          `<label class="wr-nom">
+            <input type="checkbox" name="w-${cat.id}" value="${n.m}" ${winners.includes(n.m)?'checked':''}>
+            <span>${n.m}${n.f?' — '+n.f:''}</span>
+          </label>`
+        ).join('')}
       </div>`;
     c.appendChild(d);
   });
@@ -2653,8 +2664,10 @@ function burstResultsCelebration() {
 async function saveWinners() {
   const picks = {};
   CATS.forEach(c => {
-    const s = document.getElementById('w-'+c.id);
-    if (s && s.value) picks[c.id] = s.value;
+    const boxes = document.querySelectorAll(`input[name="w-${c.id}"]:checked`);
+    const vals = Array.from(boxes).map(b => b.value);
+    if (vals.length === 1) picks[c.id] = vals[0];
+    else if (vals.length > 1) picks[c.id] = vals;
   });
   setBusy(true);
   try {
