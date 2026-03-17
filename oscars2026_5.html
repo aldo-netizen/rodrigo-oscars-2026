@@ -627,8 +627,7 @@ select option { background:#111; color:var(--ink); }
 </svg></div>
     <!-- Default landing (no group context) -->
     <div class="landing-ctas" id="landing-default-ctas">
-      <button class="landing-cta-btn" onclick="goto('page-create-group')">Create a group</button>
-      <button class="landing-cta-btn" onclick="goto('page-join-group')">Join a group</button>
+      <span class="landing-cta-btn" style="cursor:default;text-decoration:none">Until next year</span>
     </div>
 
 
@@ -637,9 +636,7 @@ select option { background:#111; color:var(--ink); }
       <div class="landing-group-label">you're invited to</div>
       <div class="landing-group-title" id="landing-group-title"></div>
       <div class="landing-ctas">
-        <button id="landing-enter-ballot-btn" class="landing-cta-btn" onclick="goToBallot()">Enter your ballot</button>
-        <button id="landing-leaderboard-btn" class="landing-cta-btn" onclick="goto('page-leaderboard'); loadLeaderboard()">View leaderboard</button>
-        <button id="landing-results-cta" class="landing-cta-btn" style="display:none" onclick="goto('page-leaderboard'); loadLeaderboard(); burstResultsCelebration()">See the results →</button>
+        <span class="landing-cta-btn" style="cursor:default;text-decoration:none">Until next year</span>
       </div>
     </div>
   </div>
